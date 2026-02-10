@@ -8,11 +8,9 @@ public class Book {
     private String isbn;
     private int publicationYear;
 
-    // Default constructor
     public Book() {
     }
 
-    // Parameterized constructor
     public Book(Long id, String title, String author, String isbn, int publicationYear) {
         this.id = id;
         this.title = title;
@@ -21,7 +19,6 @@ public class Book {
         this.publicationYear = publicationYear;
     }
 
-    // Getters and Setters
     public Long getId() {
         return id;
     }
