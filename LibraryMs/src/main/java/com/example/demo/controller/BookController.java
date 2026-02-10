@@ -7,48 +7,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/books")
 public class BookController {
 
     private final List<Book> books = new ArrayList<>();
-    private Long nextId = 4L;
+    private Long nextId = 1L;
 
-    // Initialize with 3 sample books
-    public BookController() {
-        books.add(new Book(1L, "Clean Code", "Robert Martin", "978-0132350884", 2008));
-        books.add(new Book(2L, "Effective Java", "Joshua Bloch", "978-0134685991", 2018));
-        books.add(new Book(3L, "Head First Java", "Kathy Sierra", "978-0596009205", 2005));
-    }
-
-    // GET /api/books - Return all books (200 OK)
-    @GetMapping
-    public ResponseEntity<List<Book>> getAllBooks() {
-        return ResponseEntity.ok(books);
-    }
-
-    // GET /api/books/{id} - Return a specific book by ID (200 OK or 404 Not Found)
-    @GetMapping("/{id}")
-    public ResponseEntity<Book> getBookById(@PathVariable Long id) {
-        return books.stream()
-                .filter(book -> book.getId().equals(id))
-                .findFirst()
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    // GET /api/books/search?title={title} - Search books by title (200 OK)
-    @GetMapping("/search")
-    public ResponseEntity<List<Book>> searchBooksByTitle(@RequestParam String title) {
-        List<Book> result = books.stream()
-                .filter(book -> book.getTitle().toLowerCase().contains(title.toLowerCase()))
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(result);
-    }
-
-    // POST /api/books - Add a new book (201 Created)
     @PostMapping
     public ResponseEntity<Book> addBook(@RequestBody Book book) {
         book.setId(nextId++);
@@ -56,13 +22,58 @@ public class BookController {
         return ResponseEntity.status(HttpStatus.CREATED).body(book);
     }
 
-    // DELETE /api/books/{id} - Delete a book by ID (204 No Content or 404 Not Found)
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
-        boolean removed = books.removeIf(book -> book.getId().equals(id));
-        if (removed) {
-            return ResponseEntity.noContent().build();
+    @GetMapping
+    public ResponseEntity<?> getAllBooks() {
+        if (books.isEmpty()) {
+            return ResponseEntity.ok("No books found in the library.");
         }
-        return ResponseEntity.notFound().build();
+        return ResponseEntity.ok(books);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getBookById(@PathVariable Long id) {
+        for (Book book : books) {
+            if (book.getId().equals(id)) {
+                return ResponseEntity.ok(book);
+            }
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("Book not found with id: " + id);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Book>> searchBooksByTitle(@RequestParam String title) {
+        List<Book> results = new ArrayList<>();
+        for (Book book : books) {
+            if (book.getTitle().toLowerCase().contains(title.toLowerCase())) {
+                results.add(book);
+            }
+        }
+        return ResponseEntity.ok(results);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateBook(@PathVariable Long id, @RequestBody Book updatedBook) {
+        for (int i = 0; i < books.size(); i++) {
+            if (books.get(i).getId().equals(id)) {
+                updatedBook.setId(id);
+                books.set(i, updatedBook);
+                return ResponseEntity.ok(updatedBook);
+            }
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("Book not found with id: " + id);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteBook(@PathVariable Long id) {
+        for (int i = 0; i < books.size(); i++) {
+            if (books.get(i).getId().equals(id)) {
+                books.remove(i);
+                return ResponseEntity.ok("Book deleted successfully.");
+            }
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body("Book not found with id: " + id);
     }
 }
